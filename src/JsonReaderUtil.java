@@ -161,12 +161,12 @@ public final class JsonReaderUtil {
 
     private static Piece createPiece(char t, Colors c, Position p) {
         return switch (t) {
-            case 'P' -> new Pawn(c, p);
-            case 'R' -> new Rook(c, p);
-            case 'N' -> new Knight(c, p);
-            case 'B' -> new Bishop(c, p);
-            case 'Q' -> new Queen(c, p);
-            case 'K' -> new King(c, p);
+            case 'P' -> Factory.setez("Pawn",p,c);
+            case 'R' -> Factory.setez("Rook",p,c);
+            case 'N' -> Factory.setez("Knight",p,c);
+            case 'B' -> Factory.setez("Bishop",p,c);
+            case 'Q' -> Factory.setez("Queen",p,c);
+            case 'K' -> Factory.setez("King",p,c);
             default -> throw new IllegalArgumentException("Unknown piece: " + t);
         };
     }

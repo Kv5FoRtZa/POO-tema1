@@ -13,7 +13,15 @@ public class Main {
     static Map<Integer, Game> ceva = new HashMap<>();
     static Map<Integer, Game> games = new HashMap<>();
     static User current_user;
-    public Main(){
+    private static Main single_inst = null;
+    private Main(){
+    }
+    public static Main getInstance()
+    {
+        if (single_inst == null)
+            single_inst = new Main();
+
+        return single_inst;
     }
     public void read() throws IOException, ParseException {
         //citeste din json
@@ -263,31 +271,31 @@ public class Main {
                                 joc.tabla.tset.remove(chpr);
                                 joc.p1.removePiece(to,transformat);
                                 if(trs_str.equals("Regina")){
-                                    Piece nou = new Queen(Colors.White,to);
+                                    Piece nou = Factory.setez("Queen",to,Colors.White);
                                     joc.p1.addPiece(to,nou);
                                     ChessPair<Position,Piece> chpr2 = new ChessPair<>();
                                     chpr2.setValue(nou);
                                     chpr2.setKey(to);
                                     joc.tabla.tset.add(chpr2);
                                 }
-                                if(trs_str.equals("Tura")){
-                                    Piece nou = new Rook(Colors.White,to);
+                                else if(trs_str.equals("Tura")){
+                                    Piece nou = Factory.setez("Rook",to,Colors.White);
                                     joc.p1.addPiece(to,nou);
                                     ChessPair<Position,Piece> chpr2 = new ChessPair<>();
                                     chpr2.setValue(nou);
                                     chpr2.setKey(to);
                                     joc.tabla.tset.add(chpr2);
                                 }
-                                if(trs_str.equals("Nebun")){
-                                    Piece nou = new Bishop(Colors.White,to);
+                                else if(trs_str.equals("Nebun")){
+                                    Piece nou = Factory.setez("Bishop",to,Colors.White);
                                     joc.p1.addPiece(to,nou);
                                     ChessPair<Position,Piece> chpr2 = new ChessPair<>();
                                     chpr2.setValue(nou);
                                     chpr2.setKey(to);
                                     joc.tabla.tset.add(chpr2);
                                 }
-                                if(trs_str.equals("Cal")){
-                                    Piece nou = new Knight(Colors.White,to);
+                                else if(trs_str.equals("Cal")){
+                                    Piece nou = Factory.setez("Knight",to,Colors.White);
                                     joc.p1.addPiece(to,nou);
                                     ChessPair<Position,Piece> chpr2 = new ChessPair<>();
                                     chpr2.setValue(nou);
@@ -447,31 +455,31 @@ public class Main {
                                 joc.tabla.tset.remove(chpr);
                                 joc.p1.removePiece(to,transformat);
                                 if(trs_str.equals("Regina")){
-                                    Piece nou = new Queen(Colors.Black,to);
+                                    Piece nou = Factory.setez("Queen",to,Colors.Black);
                                     joc.p1.addPiece(to,nou);
                                     ChessPair<Position,Piece> chpr2 = new ChessPair<>();
                                     chpr2.setValue(nou);
                                     chpr2.setKey(to);
                                     joc.tabla.tset.add(chpr2);
                                 }
-                                if(trs_str.equals("Tura")){
-                                    Piece nou = new Rook(Colors.Black,to);
+                                else if(trs_str.equals("Tura")){
+                                    Piece nou = Factory.setez("Rook",to,Colors.Black);
                                     joc.p1.addPiece(to,nou);
                                     ChessPair<Position,Piece> chpr2 = new ChessPair<>();
                                     chpr2.setValue(nou);
                                     chpr2.setKey(to);
                                     joc.tabla.tset.add(chpr2);
                                 }
-                                if(trs_str.equals("Nebun")){
-                                    Piece nou = new Bishop(Colors.Black,to);
+                                else if(trs_str.equals("Nebun")){
+                                    Piece nou = Factory.setez("Bishop",to,Colors.Black);
                                     joc.p1.addPiece(to,nou);
                                     ChessPair<Position,Piece> chpr2 = new ChessPair<>();
                                     chpr2.setValue(nou);
                                     chpr2.setKey(to);
                                     joc.tabla.tset.add(chpr2);
                                 }
-                                if(trs_str.equals("Cal")){
-                                    Piece nou = new Knight(Colors.Black,to);
+                                else if(trs_str.equals("Cal")){
+                                    Piece nou = Factory.setez("Knight",to,Colors.Black);
                                     joc.p1.addPiece(to,nou);
                                     ChessPair<Position,Piece> chpr2 = new ChessPair<>();
                                     chpr2.setValue(nou);
@@ -603,7 +611,7 @@ public class Main {
                                 //schimba in regina
                                 if(calc == Colors.White && fin.Coord_lit == 8 && piesa.type() == 'P'){
                                     joc.computer.removePiece(fin,piesa);
-                                    Piece nou = new Queen(Colors.White,fin);
+                                    Piece nou = Factory.setez("Queen",fin,Colors.White);
                                     joc.computer.addPiece(fin,nou);
                                     ChessPair<Position,Piece> chpr = new ChessPair<>();
                                     chpr.setValue(piesa);
@@ -615,7 +623,7 @@ public class Main {
                                 }
                                 else if(calc == Colors.Black && fin.Coord_lit == 1 && piesa.type() == 'P'){
                                     joc.computer.removePiece(fin,piesa);
-                                    Piece nou = new Queen(Colors.Black,fin);
+                                    Piece nou = Factory.setez("Queen",fin,Colors.Black);
                                     joc.computer.addPiece(fin,nou);
                                     ChessPair<Position,Piece> chpr = new ChessPair<>();
                                     chpr.setValue(piesa);
@@ -653,7 +661,7 @@ public class Main {
         //aici adaug punctajul nou in json
     }
     public static void main (String[] args) throws Exception {
-        Main sah = new Main();
+        Main sah = Main.getInstance();
         sah.read();
         //in games e json games
         //ofc in utlizatori e json utilizatori
