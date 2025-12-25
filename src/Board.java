@@ -237,53 +237,10 @@ public class Board {
             if(p == null){
                 throw new InvalidMoveException("Nu ai o piesa pe pozitia ceruta");
             }
-            if(p.type() == 'P'){
-                ivan = p.getPossibleMoves(this);
-                for(Position i : ivan){
-                    if(i.compareTo(to) == 0){
-                        return true;
-                    }
-                }
-            }
-            else if(p.type() == 'N'){
-                ivan = p.getPossibleMoves(this);
-                for(Position i : ivan){
-                    if(i.compareTo(to) == 0){
-                        return true;
-                    }
-                }
-                return false;
-            }
-            else if(p.type() == 'B'){
-                ivan = p.getPossibleMoves(this);
-                for(Position i : ivan){
-                    if(i.compareTo(to) == 0){
-                        return true;
-                    }
-                }
-            }
-            else if(p.type() == 'R'){
-                ivan = p.getPossibleMoves(this);
-                for(Position i : ivan){
-                    if(i.compareTo(to) == 0){
-                        return true;
-                    }
-                }
-            }
-            else if(p.type() == 'Q'){
-                ivan = p.getPossibleMoves(this);
-                for(Position i : ivan){
-                    if(i.compareTo(to) == 0){
-                        return true;
-                    }
-                }
-            }
-            else if(p.type() == 'K'){
-                ivan = p.getPossibleMoves(this);
-                for(Position i : ivan){
-                    if(i.compareTo(to) == 0){
-                        return true;
-                    }
+            ivan = p.getPossibleMoves(this);
+            for(Position i : ivan){
+                if(i.compareTo(to) == 0){
+                    return true;
                 }
             }
         }

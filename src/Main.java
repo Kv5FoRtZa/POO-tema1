@@ -192,7 +192,8 @@ public class Main {
                 //jucatorul este alb si muta
                 if(joc.checkForCheckMate(joc.p1)){
                     System.out.println("Calculatorul a catigat prin mat");
-                    puncte -= 300;
+                    PointsStrategy pct = new FinalPointsStrategy();
+                    puncte += pct.modificaPunctaj(null,-2);
                     break;
                 }
                 //se afiseaza tabla
@@ -341,7 +342,8 @@ public class Main {
                 else if(mutare.equals("renunt")){
                     //renunta gen
                     joc.resign(true);
-                    puncte -= 150;
+                    PointsStrategy pct = new FinalPointsStrategy();
+                    puncte += pct.modificaPunctaj(null,-1);
                     break;
                 }
                 else if(mutare.equals("ies")){
@@ -378,7 +380,8 @@ public class Main {
                 //acelasi lucru dar jucatorul este negru
                 if(joc.checkForCheckMate(joc.p1)){
                     System.out.println("Calculatorul a catigat prin mat");
-                    puncte -= 300;
+                    PointsStrategy pct = new FinalPointsStrategy();
+                    puncte += pct.modificaPunctaj(null,-2);
                     break;
                 }
                 System.out.println("Pozitia de pe tabla este:");
@@ -523,7 +526,8 @@ public class Main {
                 }
                 else if(mutare.equals("renunt")){
                     joc.resign(true);
-                    puncte -= 150;
+                    PointsStrategy pct = new FinalPointsStrategy();
+                    puncte += pct.modificaPunctaj(null,-1);
                     break;
                 }
                 else if(mutare.equals("ies")){
@@ -567,7 +571,8 @@ public class Main {
                 TreeSet<ChessPair<Position, Piece>> piese_computer = joc.computer.getOwnedPieces();
                 if(joc.checkForCheckMate(joc.computer)){
                     System.out.println("Jucatorul a catigat prin mat");
-                    puncte += 300;
+                    PointsStrategy pct = new FinalPointsStrategy();
+                    puncte += pct.modificaPunctaj(null,1);
                     break;
                 }
                 int nr_piese = piese_computer.size();
@@ -692,9 +697,13 @@ public class Main {
                 System.out.println("Pentru a incepe un nou joc apasa 1");
                 System.out.println("Pentru a te deloga apasa 2");
                 System.out.println("Pentru a continua un joc apasa 3");
+                System.out.println("Pentru a va vedea punctajul apasati 4");
                 Scanner myObj = new Scanner(System.in);
                 String mutare = myObj.nextLine();
-                if(mutare.charAt(0) == '1'){
+                if(mutare.charAt(0) == '4'){
+                    System.out.println(current_user.getPoints());
+                }
+                else if(mutare.charAt(0) == '1'){
                     System.out.println("Pentru a juca cu alb scrie alb, iar pentru a juca cu negru scrie negru");
                     Scanner culoare = new Scanner(System.in);
                     String col = culoare.nextLine();

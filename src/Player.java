@@ -212,21 +212,8 @@ public class Player {
                             if(capturat.getColor() != piesa.getColor()){
                                 //daca se captureaza se adauga puncte
                                 capt.add(capturat);
-                                if(capturat.type() == 'P'){
-                                    this.puncte += 10;
-                                }
-                                if(capturat.type() == 'N'){
-                                    this.puncte += 30;
-                                }
-                                if(capturat.type() == 'B'){
-                                    this.puncte += 30;
-                                }
-                                if(capturat.type() == 'R'){
-                                    this.puncte += 50;
-                                }
-                                if(capturat.type() == 'Q'){
-                                    this.puncte += 90;
-                                }
+                                PointsStrategy pct = new CapturePointsStrategy();
+                                this.puncte += pct.modificaPunctaj(capturat, 0);
                             }
                         }
                         //se muta piesa
