@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 
-public class Game {
+public class Game implements GameObserver{
     int ident;
     Board tabla;
     Player p1,computer;
@@ -13,6 +13,9 @@ public class Game {
         this.p1 = new Player("player",Colors.Black);
         this.computer = new Player("calculator",Colors.Black);
         this.miscari = new ArrayList<>();
+    }
+    public Move ultimaMiscare(){
+        return miscari.getLast();
     }
     public int getId(){
         return this.ident;
@@ -126,4 +129,34 @@ public class Game {
         return 0;
     }
 
+    @Override
+    public int onMoveMade(Player p, Position from,Position to, int psc) throws Exception {
+        if(tabla.getPieceAt(to) != null && tabla.getPieceAt(to).getColor() != p.col){
+            if(psc == 1)
+            {
+                onPieceCaptured(tabla.getPieceAt(to), 1);
+            }
+            else{
+                onPieceCaptured(tabla.getPieceAt(to), -1);
+            }
+        }
+        return addMove(p,from,to);
+    }
+
+    @Override
+    public void onPieceCaptured(Piece piece, int psc) {
+        Position pos = piece.getPosition();
+        if(psc == 1){
+            computer.removePiece(pos,piece);
+        }
+        else{
+            p1.removePiece(pos,piece);
+        }
+    }
+
+    @Override
+    public void onPlayerSwitch(Player currentPlayer) {
+        //call switchPlayer
+        //intoarce tabla
+    }
 }
