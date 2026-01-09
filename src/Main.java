@@ -525,6 +525,18 @@ public class Main {
     public void intialize(JFrame app, Colors col, Game joc, Main sah) throws InvalidMoveException {
         JTextArea history = new JTextArea(15, 18);
         history.setEditable(true);
+        if(joc.miscari != null){
+            for(Move m : joc.miscari){
+                String s = "";
+                s += m.getCuloare();
+                s += ' ';
+                s += m.getPlecat();
+                s += ' ';
+                s += m.getAjuns();
+                s += '\n';
+                history.append(s);
+            }
+        }
         JLabel piese_capturate_alb_1 = new JLabel("Piesele capturate de alb sunt:");
         JLabel piese_capturate_alb_2 = new JLabel("");
         JLabel piese_capturate_negru_1 = new JLabel("Piesele capturate de negru sunt:");
@@ -604,6 +616,17 @@ public class Main {
                                 return;
                             }
                             af = 1;
+                            if(current_user.getActiveGames().contains(joc)){
+                                int nr = joc.getId();
+                                current_user.removeGame(joc);
+                                games.remove(joc);
+                                Path path2 = Path.of("src/games.json");
+                                try {
+                                    JsonReaderUtil.writeGames(path2,games);
+                                } catch (IOException ex) {
+                                    throw new RuntimeException(ex);
+                                }
+                            }
                             puncte_de_afisat = puncte;
                             puncte_de_afisat += joc.p1.getPoints();
                             puncte += current_user.getPoints();
@@ -664,6 +687,17 @@ public class Main {
         right.add(siesi);
         renunta.addActionListener(e -> {
             try {
+                if(current_user.getActiveGames().contains(joc)){
+                    int nr = joc.getId();
+                    current_user.removeGame(joc);
+                    games.remove(joc);
+                    Path path2 = Path.of("src/games.json");
+                    try {
+                        JsonReaderUtil.writeGames(path2,games);
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
                 joc.resign(true);
                 PointsStrategy pct = new FinalPointsStrategy();
                 puncte += pct.modificaPunctaj(null,-1);
@@ -701,6 +735,13 @@ public class Main {
             joc.setId(nr);
             current_user.addGame(joc);
             games.put(nr, joc);
+            Path path = Path.of("src/accounts.json");
+            try {
+                utilizatori.add(current_user);
+                UserJsonWriter.writeUsers(path, utilizatori);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
             MainMenu(app,sah);
             try {
                 write();
@@ -820,7 +861,7 @@ public class Main {
                     }
                     try {
                         //new account face contul nou
-                        utilizatori.add(newAccount(user, pass));
+                        newAccount(user, pass);
                         LoadGames ld = new LoadGames();
                         current_user = ld.exec(current_user,games);
                     } catch (IOException ex) {
@@ -871,10 +912,20 @@ public class Main {
             Move ultima_mutare = joc.miscari.getLast();
             Colors ultim_col = ultima_mutare.getCuloare();
             if(ultim_col == Colors.White) {
-                cnt = 1;
+                if(col == Colors.White){
+                    cnt = 1;
+                }
+                else {
+                    cnt = 0;
+                }
             }
             else{
-                cnt = 0;
+                if(col == Colors.White){
+                    cnt = 0;
+                }
+                else {
+                    cnt = 1;
+                }
             }
 
             //incarc piesele

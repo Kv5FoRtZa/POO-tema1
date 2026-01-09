@@ -86,6 +86,10 @@ public class Game implements GameObserver{
                     }
                     else{
                         tabla.setPieceAt(catre,capt);
+                        ChessPair<Position, Piece> chp = new ChessPair<>();
+                        chp.setKey(catre);
+                        chp.setValue(capt);
+                        tabla.tset.add(chp);
                         tabla.setPieceAt(pos,se_muta);
                     }
                     if(piesa.type() == 'K'){
