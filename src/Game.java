@@ -160,6 +160,7 @@ public class Game implements GameObserver{
 
     @Override
     public void onPlayerSwitch(Player currentPlayer) {
+        switchPlayer(p1);
         //call switchPlayer
         //intoarce tabla
     }

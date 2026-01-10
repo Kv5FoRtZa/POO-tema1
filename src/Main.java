@@ -1,16 +1,20 @@
 import org.json.simple.parser.ParseException;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Scanner;
 import java.io.*;
 import javax.swing.*;
 
 import java.util.List;
+
+import static java.lang.Math.abs;
+
 public class Main {
     static int nr_jocuri = 0;
     static List<User> utilizatori = new ArrayList<>();
@@ -20,14 +24,13 @@ public class Main {
     private static Main single_inst = null;
     Position selected = null;
     int cnt, puncte,mat,af = 0,puncte_de_afisat;
-    Board b1,b2,b3;
+    Board b1,b2,b3,b4,b5;
     private Main(){
     }
     public static Main getInstance()
-    {
+    {// getinstance design pattern
         if (single_inst == null)
             single_inst = new Main();
-
         return single_inst;
     }
     public void read() throws IOException, ParseException {
@@ -38,36 +41,33 @@ public class Main {
         utilizatori = UserJsonReader.readUsers(path);
     }
     public void highlightMovesForSelected( Game joc, Colors col,List<Position> highlighted,Map<Position, JPanel> squareByPos, JFrame app) throws InvalidMoveException {
+        //la click pe piesa trebuie sa apara niste highlighturi ca sa vezi ce ai selectat si asa
         clearHighlightsOnly(highlighted,squareByPos);
-
         Piece piece = joc.tabla.getPieceAt(selected);
         if (piece == null) {
             selected = null;
             return;
         }
-
         List<Position> moves = piece.getPossibleMoves(joc.tabla);
-
-        // highlight selection
+        // aici da highlight la piesa
         JPanel selSq = squareByPos.get(selected);
         if (selSq != null) {
             selSq.setBorder(BorderFactory.createLineBorder(Color.RED, 3));
         }
-
-        // highlight targets
+        // aici da la pozitiile posibilie de mutat
+        // nu verifica sa nu fii in sah sau asa dar it is what it is
         for (Position m : moves) {
             JPanel sq = squareByPos.get(m);
             if (sq != null) {
-                sq.setBorder(BorderFactory.createLineBorder(Color.YELLOW, 3));
+                sq.setBorder(BorderFactory.createLineBorder(Color.GREEN, 3));
                 highlighted.add(m);
             }
         }
-
         app.revalidate();
         app.repaint();
     }
     public void clearHighlightsOnly( List<Position> highlighted,Map<Position, JPanel> squareByPos) {
-        // clear highlighted target borders
+        //cand nu mai e click, trebuie sterse highlight-urile si de la pozitiile posibilie
         for (Position p : highlighted) {
             JPanel sq = squareByPos.get(p);
             if (sq != null) {
@@ -75,8 +75,7 @@ public class Main {
             }
         }
         highlighted.clear();
-
-        // clear selected border
+        // si de la piesa selectata
         if (selected != null) {
             JPanel selSq = squareByPos.get(selected);
             if (selSq != null) {
@@ -86,24 +85,29 @@ public class Main {
     }
     public void clearHighlightsAndSelection(List<Position> highlighted,Map<Position, JPanel> squareByPos) {
         clearHighlightsOnly(highlighted,squareByPos);
+        //apeleaza functia care sterge highlighturile si in plus deselecteaza si in memorie(nu doar vizual)
         selected = null;
     }
     public void onSquareClicked(Position clicked, Game joc, Colors col, List<Position> highlighted,Map<Position, JPanel> squareByPos, JFrame app, Main sah,JTextArea history,JLabel p1, JLabel p2, JLabel pct1,JLabel fin) throws Exception {
         if(mat == 1 || mat == 2)
-        {
+        {// daca e remiza sau mat se face mat 2 sau 1, si nu vreau sa mai mute calculatorul/ sa mai poti juca dupa
             return;
         }
         boolean remiza = true;
-        if(b1 == b2 && b3 == b2){
-            remiza = joc.draw();
-            PointsStrategy pct = new FinalPointsStrategy();
-            puncte += pct.modificaPunctaj(null,1);
-            mat = 2;
-            fin.setText("Partida terminata prin remiza. Va rugam apasati pe tabla inca o data");
-            return;
-            //remiza pt cazul cu 3 pozitii consecutive cumune
+        if(b1 != null && b1.tset != null && b2 != null && b2.tset != null && b3 != null && b3.tset != null && b4 != null && b4.tset != null && b5 != null && b5.tset != null){
+            if(b1.getAllPieces().equals(b3.getAllPieces()) && b3.getAllPieces().equals(b5.getAllPieces())){
+                remiza = joc.draw();
+                PointsStrategy pct = new FinalPointsStrategy();
+                puncte += pct.modificaPunctaj(null,1);
+                mat = 2;
+                fin.setText("Partida terminata prin remiza. Va rugam apasati pe tabla inca o data");
+                return;
+                //remiza pt cazul cu 3 pozitii consecutive cumune
+            }
         }
         if(cnt == 1){
+            //aici e doar daca muta calculatorul prima data
+            //identic ca o mutare normala de calculator
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -126,11 +130,6 @@ public class Main {
                         if(piesa_dorita != null){
                             Position pozz = piesa_dorita.getKey();
                             Piece piesa = piesa_dorita.getValue();
-                            if(piesa.type() == 'K'){
-                                int i = 1;
-                                i ++;
-                                i --;
-                            }
                             List<Position> mutari_poibile= null;
                             try {
                                 mutari_poibile = piesa.getPossibleMoves(joc.tabla);
@@ -188,6 +187,7 @@ public class Main {
                                         chpr2.setKey(fin);
                                         joc.tabla.tset.add(chpr2);
                                     }
+                                    //adaug in interfata de istoric de mutari
                                     if(!joc.miscari.isEmpty()){
                                         String s = "";
                                         s += joc.ultimaMiscare().getCuloare();
@@ -214,9 +214,8 @@ public class Main {
                     for (Map.Entry<Position, JPanel> e : squareByPos.entrySet()) {
                         Position p = e.getKey();
                         JPanel sq = e.getValue();
-
+                        //aici reface tabla, deseneaza noua piesa pe noul ei loc(da remove la toate si apoi le repune)
                         sq.removeAll();
-
                         Piece piece = joc.tabla.getPieceAt(p);
                         if (piece != null) {
                             AlegeCaracter cv = new AlegeCaracter();
@@ -233,9 +232,9 @@ public class Main {
             });
         }
         Piece pieceAtClicked = joc.tabla.getPieceAt(clicked);
-
         if (selected == null) {
-            // first click: must be a human piece
+            //verifica/ asteapta pana ai selectat o piesa
+            //si face highlight-urile pe tabla conform functiilor de highlight
             if (pieceAtClicked != null) {
                 if (pieceAtClicked.getColor() == col) {
                     selected = clicked;
@@ -248,8 +247,7 @@ public class Main {
             }
             return;
         }
-
-        // second click: if clicked is a highlighted target -> attempt move
+        //daca dai click pe una din alea highlighted aka una din alea posibile te muti
         boolean isTarget = false;
         for (Position p : highlighted) {
             if (p.equals(clicked)) {
@@ -257,7 +255,6 @@ public class Main {
                 break;
             }
         }
-
         if (isTarget) {
             if(joc.checkForCheckMate(joc.p1)){
                 System.out.println("Calculatorul a catigat prin mat");
@@ -267,6 +264,7 @@ public class Main {
                 fin.setText("Partida terminata prin mat. Va rugam apasati pe tabla inca o data");
                 return;
             }
+            //se face mutarea selectata de player
             int reusit = 0;
             Piece de_eliminat = null;
             if(joc.tabla.getPieceAt(clicked) != null){
@@ -277,8 +275,8 @@ public class Main {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-
             if (reusit != 0) {
+                // se fac verificarile daca au fost capturate piese si se baga in interfata de piese capturate
                 if(de_eliminat != null){
                     AlegeCaracter lol = new AlegeCaracter();
                     if(de_eliminat.getColor() == Colors.White){
@@ -292,6 +290,7 @@ public class Main {
                     pppct += ppct;
                     pct1.setText(pppct);
                 }
+                //istoricul de mutari interfata
                 if(!joc.miscari.isEmpty()){
                     String s = "";
                     s += joc.ultimaMiscare().getCuloare();
@@ -302,6 +301,7 @@ public class Main {
                     s += '\n';
                     history.append(s);
                 }
+                //transformarea(identic ca la calculator si ca la varianta veche in terminal)
                 if(col == Colors.White && clicked.Coord_num == 8 && joc.tabla.getPieceAt(clicked).type() == 'P'){
                     ChessPair<Position,Piece> chpr = new ChessPair<>();
                     chpr.setValue(joc.tabla.getPieceAt(clicked));
@@ -328,13 +328,13 @@ public class Main {
                     chpr2.setKey(clicked);
                     joc.tabla.tset.add(chpr2);
                 }
+                //dupa mutare se scot highlighturile
+                //apoi se sterg piesele si pun din nou noile piese(cu o mutare diferit si maybe o piesa capturata)
                 clearHighlightsAndSelection(highlighted,squareByPos);
                 for (Map.Entry<Position, JPanel> e : squareByPos.entrySet()) {
                     Position p = e.getKey();
                     JPanel sq = e.getValue();
-
                     sq.removeAll();
-
                     Piece piece = joc.tabla.getPieceAt(p);
                     if (piece != null) {
                         AlegeCaracter cv = new AlegeCaracter();
@@ -345,11 +345,9 @@ public class Main {
                         sq.add(ceva2, BorderLayout.CENTER);
                     }
                 }
-
                 app.revalidate();
                 app.repaint();
-
-                // computer random move (after UI updates)
+                //dupa ce muta playerul si termina de mutat, apoi muta calculatorul iar
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
@@ -366,6 +364,8 @@ public class Main {
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
+                        //din nou, logica veche de la jocul din terminal
+                        //ia o piesa random si o muta
                         int nr_piese = piese_computer.size();
                         while(true) {
                             Random r = new Random();
@@ -384,11 +384,6 @@ public class Main {
                             if(piesa_dorita != null){
                                 Position pozz = piesa_dorita.getKey();
                                 Piece piesa = piesa_dorita.getValue();
-                                if(piesa.type() == 'K'){
-                                    int i = 1;
-                                    i ++;
-                                    i --;
-                                }
                                 List<Position> mutari_poibile= null;
                                 try {
                                     mutari_poibile = piesa.getPossibleMoves(joc.tabla);
@@ -406,13 +401,21 @@ public class Main {
                                     int reusit2 = 0;
                                     try {
                                         reusit2 = joc.onMoveMade(joc.computer,pozz,fin,-1);
+                                        if(reusit2 == 0){
+                                            //sa nu se salveze in interfata de mutari unele mutari invalide
+                                            joc.miscari.removeLast();
+                                        }
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
                                     if(reusit2 != 0){
-                                        b3 = b2;
-                                        b2 = b1;
+                                        //tablele vechi, pt verificarea de remiza
+                                        b5 = new Board(b4);
+                                        b4 = new Board(b3);
+                                        b3 = new Board(b2);
+                                        b2 = new Board(b1);
                                         b1 = new Board(joc.tabla);
+                                        //interfata eliminat identic ca la player
                                         if(de_eliminat != null){
                                             AlegeCaracter lol = new AlegeCaracter();
                                             if(de_eliminat.getColor() == Colors.White){
@@ -422,6 +425,7 @@ public class Main {
                                                 p1.setText(p1.getText() + lol.alege(Colors.Black,de_eliminat.type()));
                                             }
                                         }
+                                        //din nou interfata de istoric de mutari
                                         if(!joc.miscari.isEmpty()){
                                             String s = "";
                                             s += joc.ultimaMiscare().getCuloare();
@@ -470,6 +474,7 @@ public class Main {
                                 }
                             }
                         }
+                        //din nou, se steg toate piesele si repun cele noi cu o mutare diferita
                         for (Map.Entry<Position, JPanel> e : squareByPos.entrySet()) {
                             Position p = e.getKey();
                             JPanel sq = e.getValue();
@@ -489,6 +494,10 @@ public class Main {
                     }
                 });
             } else {
+                //aici e daca playerul nu a fost capabil sa faca o mutare
+                //adica a dat click pe ceva highlighted dar imposibil
+                //ca de exemplu, dupa mutarea dorita ramanaea in sah
+                //atunci ramane tura lui
                 clearHighlightsAndSelection(highlighted,squareByPos);
                 for (Map.Entry<Position, JPanel> e : squareByPos.entrySet()) {
                     Position p = e.getKey();
@@ -509,7 +518,7 @@ public class Main {
             }
             return;
         }
-        // not a target: allow reselecting another own piece
+        //daca nu e in stare sa faca o mutare din orice motiv(invalid, click pe altceva) atunci se sterg highlighturile dupa un click pe ceva invalid
         if (pieceAtClicked != null) {
             if (pieceAtClicked.getColor() == col) {
                 clearHighlightsAndSelection(highlighted,squareByPos);
@@ -523,9 +532,11 @@ public class Main {
         }
     }
     public void intialize(JFrame app, Colors col, Game joc, Main sah) throws InvalidMoveException {
+        puncte = 0;
         JTextArea history = new JTextArea(15, 18);
         history.setEditable(true);
         if(joc.miscari != null){
+            //daca dau load, vreau ca mutarile vechi sa apara in istoricul din interfata
             for(Move m : joc.miscari){
                 String s = "";
                 s += m.getCuloare();
@@ -537,6 +548,7 @@ public class Main {
                 history.append(s);
             }
         }
+        //interfata de piese capturate
         JLabel piese_capturate_alb_1 = new JLabel("Piesele capturate de alb sunt:");
         JLabel piese_capturate_alb_2 = new JLabel("");
         JLabel piese_capturate_negru_1 = new JLabel("Piesele capturate de negru sunt:");
@@ -563,6 +575,8 @@ public class Main {
             fileLabel.setFont(new Font("Arial", Font.BOLD, 14));
             print_tabla.add(fileLabel);
         }
+        //se printeaza literele si cidrele in jurul tablei(daca e alb jucatorul e 1 jos, altfel e 8 jos
+        //literele sunt mereu la fel
         List<Position> highlighted = new ArrayList<>();
         Map<Position, JPanel> squareByPos = new HashMap<>();
         for(int i = 8; i >= 1; i --){
@@ -580,12 +594,13 @@ public class Main {
             print_tabla.add(fileLabel);
             char lit;
             for(int j = 1; j <= 8; j ++){
+                //se face tabla cu 2 culori alb si negru,care nu sunt chiar alb si negru dar nu conteaza
                 JPanel square = new JPanel(new BorderLayout());
                 if((i + j) % 2 == 0){
-                    square.setBackground(new Color(244, 165, 72));
+                    square.setBackground(new Color(244, 167, 67));
                 }
                 else{
-                    square.setBackground(new Color(243, 215, 168));
+                    square.setBackground(new Color(243, 215, 167));
                 }
                 int ln;
                 if(col == Colors.White){
@@ -598,6 +613,7 @@ public class Main {
                 }
                 Position p = new Position(lit,ln);
                 if(joc.tabla.getPieceAt(p) != null){
+                    //se bag sia si piesele pe pozitiile create(verific pt fiecare pozitie daca e o piesa pt ca pot fi jocuri loaded)
                     AlegeCaracter cv = new AlegeCaracter();
                     String ceva = "";
                     ceva += cv.alege(joc.tabla.getPieceAt(p).getColor(),joc.tabla.getPieceAt(p).type());
@@ -611,12 +627,17 @@ public class Main {
                 square.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mousePressed(MouseEvent e) {
+                        //aici se apeleaza jocul
+                        //e un listener basically pe fiecare casuta, si reactioneaza la click pe tabla
                         if(mat == 1 || mat == 2) {
+                            //daca e mat/remiza/terminat in alt mod, nu mai vreau sa mai inregistreze clickuri
                             if(af == 1){
+                                //daca mai sunt listenere deschise, nu vreau sa scriu de 2 ori in json/ sa adun puncte de 2 ori
                                 return;
                             }
                             af = 1;
                             if(current_user.getActiveGames().contains(joc)){
+                                //daca e joc loaded, il scoatem din memorie
                                 int nr = joc.getId();
                                 current_user.removeGame(joc);
                                 games.remove(joc);
@@ -627,6 +648,7 @@ public class Main {
                                     throw new RuntimeException(ex);
                                 }
                             }
+                            // logica de puncte, se aduna, se salveaza alea de afisat
                             puncte_de_afisat = puncte;
                             puncte_de_afisat += joc.p1.getPoints();
                             puncte += current_user.getPoints();
@@ -639,6 +661,7 @@ public class Main {
                             } catch (IOException ex) {
                                 throw new RuntimeException(ex);
                             }
+                            //se da load la ecranul de dinal de partida
                             SwingUtilities.invokeLater(new Runnable() {
                                 @Override
                                 public void run() {
@@ -658,6 +681,7 @@ public class Main {
                             if(mat == 1) {
                                 return;
                             }
+                            //dupa ce am facut toate verificarile daca nu e gata partida, apelez functia care muta/ da highlight/etc
                             onSquareClicked(clicked,joc,col,highlighted,squareByPos,app,sah,history,piese_capturate_alb_2,piese_capturate_negru_2,puncte2,fin);
                             if(mat == 1) {
                                 return;
@@ -670,6 +694,7 @@ public class Main {
                 print_tabla.add(square);
             }
         }
+        //butoanele secunare
         JPanel ecran_total = new JPanel(new BorderLayout());
         JPanel left = new JPanel();
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
@@ -685,70 +710,83 @@ public class Main {
         left.add(Box.createVerticalStrut(10));
         right.add(renunta);
         right.add(siesi);
-        renunta.addActionListener(e -> {
-            try {
-                if(current_user.getActiveGames().contains(joc)){
-                    int nr = joc.getId();
-                    current_user.removeGame(joc);
-                    games.remove(joc);
-                    Path path2 = Path.of("src/games.json");
+        renunta.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    //la renuntare, se fac punctele si salvarea in json
+                    //identic ca la mat/ remiza
+                    if (current_user.getActiveGames().contains(joc)) {
+                        int nr = joc.getId();
+                        current_user.removeGame(joc);
+                        games.remove(joc);
+                        Path path2 = Path.of("src/games.json");
+                        try {
+                            JsonReaderUtil.writeGames(path2, games);
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                    }
+                    joc.resign(true);
+                    PointsStrategy pct = new FinalPointsStrategy();
+                    puncte += pct.modificaPunctaj(null, -1);
+                    mat = 1;
+                    puncte_de_afisat = puncte;
+                    puncte_de_afisat += joc.p1.getPoints();
+                    FinalPartida(app, sah, "Ai renuntat!");
+                    puncte += current_user.getPoints();
+                    puncte += joc.p1.getPoints();
+                    current_user.setPoints(puncte);
+                    Path path = Path.of("src/accounts.json");
+                    utilizatori.add(current_user);
                     try {
-                        JsonReaderUtil.writeGames(path2,games);
+                        UserJsonWriter.writeUsers(path, utilizatori);
                     } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
                 }
-                joc.resign(true);
-                PointsStrategy pct = new FinalPointsStrategy();
-                puncte += pct.modificaPunctaj(null,-1);
-                mat = 1;
-                FinalPartida(app,sah,"Ai renuntat!");
-                puncte_de_afisat = puncte;
-                puncte_de_afisat += joc.p1.getPoints();
-                puncte += current_user.getPoints();
-                puncte += joc.p1.getPoints();
-                current_user.setPoints(puncte);
+            }
+        });
+        siesi.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //save and quit aici
+                //iesi, si salvezi in lista de jocuri deschise in json
+                int vf = 0;
+                int nr = 0;
+                if (current_user.getActiveGames().contains(joc)) {
+                    nr = joc.getId();
+                    current_user.removeGame(joc);
+                    games.remove(joc);
+                    vf = 1;
+                }
+                if (vf == 0) {
+                    nr = games.size();
+                    nr++;
+                }
+                joc.setId(nr);
+                current_user.addGame(joc);
+                games.put(nr, joc);
                 Path path = Path.of("src/accounts.json");
-                utilizatori.add(current_user);
                 try {
+                    utilizatori.add(current_user);
                     UserJsonWriter.writeUsers(path, utilizatori);
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
+                //te intorci in meniu aici
+                MainMenu(app, sah);
+
+                try {
+                    write();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
-        siesi.addActionListener(e -> {
-            int vf = 0;
-            int nr = 0;
-            if(current_user.getActiveGames().contains(joc)){
-                nr = joc.getId();
-                current_user.removeGame(joc);
-                games.remove(joc);
-                vf = 1;
-            }
-            if(vf == 0){
-                nr = games.size();
-                nr ++;
-            }
-            joc.setId(nr);
-            current_user.addGame(joc);
-            games.put(nr, joc);
-            Path path = Path.of("src/accounts.json");
-            try {
-                utilizatori.add(current_user);
-                UserJsonWriter.writeUsers(path, utilizatori);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-            MainMenu(app,sah);
-            try {
-                write();
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
+        //update si bagat toate composnentele
         JScrollPane scroll = new JScrollPane(history);
         right.add(scroll);
         left.add(piese_capturate_alb_1);
@@ -779,9 +817,13 @@ public class Main {
         //cand se da click cu succes pe logheaza-te, se incarca meniul principal
         /**DACA MERGE LOGARE CU UN CONT NULL(nu e scris nimic si la parola si la cont) inseamna ca exista un cont null in json
          * momentan un cont null nu mai poate fi adaugat, insa posibil sa fi ramas conturi proaste salvate deja in jsonuri
+         * in timpul testarii am avut mai multe buguri legate de conturi, am avut 4 sau 5 conturi cu acelasi nume si aceasi parola
+         * daca apar conturi dubioase, redescarca arhiva oficiala si refa cele 2 jsonuri
+         * unele conturi pot avea in istoric partide imposibile, cu mai multe mutari pe aceasi culoare, din nou sterge jsonurile si redescarca-le
          * **/
             if (ce_faci == 1) {
                 //conectare
+                //apare username si parola si buton de loghin
                 frame.getContentPane().removeAll();
                 JPanel panel = new JPanel(null);
                 panel.setBounds(0, 0, 1600, 900);
@@ -803,24 +845,25 @@ public class Main {
                 frame.add(panel);
                 frame.revalidate();
                 frame.repaint();
-                submit.addActionListener(e -> {
-                    String user = userField.getText();
-                    String pass = new String(passField.getPassword());
-                    //verifica sa existe utilizatorul
-                    for (User u : utilizatori) {
-                        if (u.getEmail().equals(user) && u.getPassword().equals(pass)) {
-                            current_user = u;
-                            System.out.println("Conectare reusita");
-                            LoadGames ld = new LoadGames();
-                            current_user = ld.exec(current_user,games);
-                            MainMenu(frame,sah);
-                            return;
+                submit.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        String user = userField.getText();
+                        String pass = new String(passField.getPassword());
+                        //verifica sa existe utilizatorul
+                        for (User u : utilizatori) {
+                            if (u.getEmail().equals(user) && u.getPassword().equals(pass)) {
+                                current_user = u;
+                                System.out.println("Conectare reusita");
+                                LoadGames ld = new LoadGames();
+                                current_user = ld.exec(current_user, games);
+                                MainMenu(frame, sah);
+                                return;
+                            }
                         }
+                        //daca nu a apelat main menu e clar eroare
+                        JOptionPane.showMessageDialog(frame, "Utilizator sau parola gresite", "Eroare", JOptionPane.ERROR_MESSAGE);
                     }
-                    JOptionPane.showMessageDialog(frame,
-                            "Utilizator sau parola gresite",
-                            "Eroare",
-                            JOptionPane.ERROR_MESSAGE);
                 });
             } else if (ce_faci == 2) {
                 //cont nou
@@ -845,36 +888,40 @@ public class Main {
                 frame.add(panel);
                 frame.revalidate();
                 frame.repaint();
-                submit.addActionListener(e -> {
-                    String user = userField.getText();
-                    String pass = new String(passField.getPassword());
-                    if(user.isEmpty() || pass.isEmpty()){
-                        JOptionPane.showMessageDialog(frame, "Utilizator nul sau parola inexistenta", "Eroare", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    for (User u : utilizatori) {
-                        //verifica sa nu existe deja utilizatorul
-                        if (u.getEmail().equals(user)) {
-                            JOptionPane.showMessageDialog(frame, "Utilizator deja existent", "Eroare", JOptionPane.ERROR_MESSAGE);
+                submit.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        String user = userField.getText();
+                        String pass = new String(passField.getPassword());
+                        if (user.isEmpty() || pass.isEmpty()) {
+                            //verifica sa nu fie conturi null
+                            JOptionPane.showMessageDialog(frame, "Utilizator nul sau parola inexistenta", "Eroare", JOptionPane.ERROR_MESSAGE);
                             return;
                         }
+                        for (User u : utilizatori) {
+                            //verifica sa nu existe deja utilizatorul
+                            if (u.getEmail().equals(user)) {
+                                JOptionPane.showMessageDialog(frame, "Utilizator deja existent", "Eroare", JOptionPane.ERROR_MESSAGE);
+                                return;
+                            }
+                        }
+                        try {
+                            //new account face contul nou
+                            newAccount(user, pass);
+                            LoadGames ld = new LoadGames();
+                            current_user = ld.exec(current_user, games);
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        JOptionPane.showMessageDialog(frame, "Cont creat cu succes!");
+                        MainMenu(frame, sah);
                     }
-                    try {
-                        //new account face contul nou
-                        newAccount(user, pass);
-                        LoadGames ld = new LoadGames();
-                        current_user = ld.exec(current_user,games);
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                    JOptionPane.showMessageDialog(frame, "Cont creat cu succes!");
-                    MainMenu(frame,sah);
-                    return;
                 });
             }
     }
     public static User newAccount(String email, String password) throws IOException {
         //se adauga un cont nou si se salveza in json
+        //se rescriu jsonurile
         User user_nou = new User(email,password);
         user_nou.setPoints(0);
         user_nou.setGames(null);
@@ -890,6 +937,7 @@ public class Main {
         af = 0;
         utilizatori.remove(current_user);
         Game joc;
+        //aici se incarca jocul din memorie/ se creeaza un joc nou
         if(daca_este_load == null){
             //se incarca o tabla noua daca nu se da load la un joc
             joc = new Game(1);
@@ -911,6 +959,7 @@ public class Main {
             joc = daca_este_load;
             Move ultima_mutare = joc.miscari.getLast();
             Colors ultim_col = ultima_mutare.getCuloare();
+            //cine muta?
             if(ultim_col == Colors.White) {
                 if(col == Colors.White){
                     cnt = 1;
@@ -948,10 +997,13 @@ public class Main {
                 }
             }
         }
+        //incarc tablele pt vf de remiza
         puncte = 0;
         b1 = joc.tabla;
         b2 = null;
         b3 = null;
+        b4 = null;
+        b5 = null;
         intialize(app,col,joc,sah);
     }
     private static void LoadGame(JFrame frame, Main sah) throws Exception {
@@ -962,9 +1014,11 @@ public class Main {
             JOptionPane.showMessageDialog(frame, "Nu exista jocuri salvate", "Info", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        Integer[] ids = games.stream().map(Game::getId).toArray(Integer[]::new);
-        Integer selected = (Integer) JOptionPane.showInputDialog(frame, "Alegeti un joc", "Continua joc", JOptionPane.PLAIN_MESSAGE, null, ids, ids[0]
-        );
+        Integer[] ids = new Integer[games.size()];
+        for (int i = 0; i < games.size(); i++) {
+            ids[i] = games.get(i).getId();
+        }
+        Integer selected = (Integer) JOptionPane.showInputDialog(frame, "Alegeti un joc", "Continua joc", JOptionPane.PLAIN_MESSAGE, null, ids, ids[0]);
         if (selected == null) return;
         for (Game g : games) {
             if (g.getId() == selected) {
@@ -999,22 +1053,28 @@ public class Main {
         aplicatie.revalidate();
         aplicatie.repaint();
         inchide.addActionListener(new Close());
-        // while(true){
-        if(current_user == null){
+        //incarca login-ul cu varianta aleasa
+        if (current_user == null) {
             int vf = 0;
-            log.addActionListener(e -> {
-                try {
-                    //se apeleaza functia veche de login
-                    login(1,aplicatie,sah);
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+            log.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        //se apeleaza functia veche de login
+                        login(1, aplicatie, sah);
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
             });
-            cont.addActionListener(e -> {
-                try {
-                    login(2,aplicatie,sah);
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+            cont.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        login(2, aplicatie, sah);
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
             });
         }
@@ -1026,6 +1086,7 @@ public class Main {
         //frame.getContentPane().removeAll();
         JPanel panel = new JPanel(null);
         panel.setBounds(0, 0, 1600, 900);
+        //iti vezi si punctele
         JLabel userInfo = new JLabel("Utilizator: " + current_user.getEmail() + " | Punctaj: " + current_user.getPoints());
         userInfo.setBounds(1200, 20, 380, 30);
         JButton newGame = new JButton("Incepe joc nou");
@@ -1042,24 +1103,35 @@ public class Main {
         panel.add(inchide);
         inchide.setBounds(650,510,300,50);
         inchide.addActionListener(new Close());
-        newGame.addActionListener(e -> {
-            try {
-                AlegeCuloarea(frame,sah);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
+        // joc nou = alegi o culoare si apoi joci
+        //load = alegi la ce dai load si apoi joci
+        newGame.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    AlegeCuloarea(frame, sah);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
-        loadGame.addActionListener(e -> {
-            try {
-                LoadGame(frame,sah);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
+        loadGame.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    LoadGame(frame, sah);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
-        logout.addActionListener(e -> {
-            current_user = null;
-            frame.getContentPane().removeAll();
-            inceput(frame,sah);
+        logout.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                current_user = null;
+                frame.getContentPane().removeAll();
+                inceput(frame, sah);
+            }
         });
         frame.setContentPane(panel);
         frame.setSize(1600, 900);
@@ -1072,12 +1144,22 @@ public class Main {
         panel.setBounds(0, 0, 1600, 900);
         JLabel label1 = new JLabel(s);
         int puncte_curente = sah.puncte_de_afisat;
-        JLabel label2 = new JLabel("Punctele castigate in aceasta partida sunt " + puncte_curente);
+        JLabel label2;
+        //afisez punctele castigate/pierdute
+        if(puncte_curente >= 0)
+        {
+            label2 = new JLabel("Punctele castigate in aceasta partida sunt " + puncte_curente);
+        }
+        else {
+            label2 = new JLabel("Punctele pierdute in aceasta partida sunt " + abs(puncte_curente));
+        }
+        //punctele vechi
         JLabel userInfo = new JLabel("Utilizator: " + current_user.getEmail() + " | Punctaj: " + current_user.getPoints());
         userInfo.setBounds(1200, 20, 380, 30);
         label1.setBounds(700, 200, 300, 50);
         label2.setBounds(670, 500, 300, 50);
         JButton newGame = new JButton("Mergi catre meniul principal");
+        //intoarce-te sau iesi din aplicatie ca obtiuni
         newGame.setBounds(650, 300, 300, 50);
         panel.add(userInfo);
         panel.add(newGame);
@@ -1087,11 +1169,14 @@ public class Main {
         panel.add(inchide);
         inchide.setBounds(650,370,300,50);
         inchide.addActionListener(new Close());
-        newGame.addActionListener(e -> {
-            try {
-                MainMenu(frame,sah);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
+        newGame.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    MainMenu(frame,sah);
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         });
         frame.setContentPane(panel);

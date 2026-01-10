@@ -12,7 +12,11 @@ public class Board {
         this.tset = new TreeSet<>();
     }
     public Board(Board b){
-        this.tset = b.tset;
+        this.tset = new TreeSet<>();
+        if(b != null && b.tset != null)
+        {
+            this.tset.addAll(b.tset);
+        }
     }
     public Piece getPieceAt (Position obj) {
         for (ChessPair<Position, Piece> chessPair : tset) {
