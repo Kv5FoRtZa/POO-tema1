@@ -40,7 +40,7 @@ public class Main {
         Path path = Path.of("src/accounts.json");
         utilizatori = UserJsonReader.readUsers(path);
     }
-    public void highlightMovesForSelected( Game joc, Colors col,List<Position> highlighted,Map<Position, JPanel> squareByPos, JFrame app) throws InvalidMoveException {
+    public void highlightMutari( Game joc, Colors col,List<Position> highlighted,Map<Position, JPanel> squareByPos, JFrame app) throws InvalidMoveException {
         //la click pe piesa trebuie sa apara niste highlighturi ca sa vezi ce ai selectat si asa
         clearHighlightsOnly(highlighted,squareByPos);
         Piece piece = joc.tabla.getPieceAt(selected);
@@ -83,7 +83,7 @@ public class Main {
             }
         }
     }
-    public void clearHighlightsAndSelection(List<Position> highlighted,Map<Position, JPanel> squareByPos) {
+    public void clearAll(List<Position> highlighted,Map<Position, JPanel> squareByPos) {
         clearHighlightsOnly(highlighted,squareByPos);
         //apeleaza functia care sterge highlighturile si in plus deselecteaza si in memorie(nu doar vizual)
         selected = null;
@@ -108,128 +108,123 @@ public class Main {
         if(cnt == 1){
             //aici e doar daca muta calculatorul prima data
             //identic ca o mutare normala de calculator
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    TreeSet<ChessPair<Position, Piece>> piese_computer = joc.computer.getOwnedPieces();
-                    int nr_piese = piese_computer.size();
-                    while(true) {
-                        Random r = new Random();
-                        //aleg o piesa random
-                        int r1 = r.nextInt(nr_piese);
-                        int cnt_int = 0;
-                        ChessPair<Position, Piece> piesa_dorita = new ChessPair<Position, Piece>();
-                        for(ChessPair<Position, Piece> i : piese_computer){
-                            //iau piesa random
-                            if(cnt_int == r1){
-                                piesa_dorita = i;
-                                break;
-                            }
-                            cnt_int ++;
-                        }
-                        if(piesa_dorita != null){
-                            Position pozz = piesa_dorita.getKey();
-                            Piece piesa = piesa_dorita.getValue();
-                            List<Position> mutari_poibile= null;
-                            try {
-                                mutari_poibile = piesa.getPossibleMoves(joc.tabla);
-                            } catch (InvalidMoveException e) {
-                                throw new RuntimeException(e);
-                            }
-                            if(!mutari_poibile.isEmpty()){
-                                //daca are mutari, fac o mutare random
-                                Random random = new Random();
-                                Position fin = mutari_poibile.get(random.nextInt(mutari_poibile.size()));
-                                Piece de_eliminat = null;
-                                if(joc.tabla.getPieceAt(fin) != null){
-                                    de_eliminat = joc.tabla.getPieceAt(fin);
-                                }
-                                int reusit = 0;
-                                try {
-                                    reusit = joc.onMoveMade(joc.computer,pozz,fin,-1);
-                                    if(de_eliminat != null){
-                                        AlegeCaracter lol = new AlegeCaracter();
-                                        if(de_eliminat.getColor() == Colors.White){
-                                            p2.setText(p2.getText() + lol.alege(Colors.White,de_eliminat.type()));
-                                        }
-                                        if(de_eliminat.getColor() == Colors.Black){
-                                            p1.setText(p1.getText() + lol.alege(Colors.Black,de_eliminat.type()));
-                                        }
-                                    }
-                                } catch (Exception e) {
-                                    throw new RuntimeException(e);
-                                }
-                                if(reusit != 0){
-                                    cnt = 0;
-                                    //schimba in regina
-                                    if(col == Colors.Black && fin.Coord_lit == 8 && piesa.type() == 'P'){
-                                        joc.computer.removePiece(fin,piesa);
-                                        Piece nou = Factory.setez("Queen",fin,Colors.White);
-                                        joc.computer.addPiece(fin,nou);
-                                        ChessPair<Position,Piece> chpr = new ChessPair<>();
-                                        chpr.setValue(piesa);
-                                        chpr.setKey(fin);
-                                        joc.tabla.tset.remove(chpr);
-                                        ChessPair<Position,Piece> chpr2 = new ChessPair<>();
-                                        chpr2.setValue(nou);
-                                        chpr2.setKey(fin);
-                                    }
-                                    else if(col == Colors.White && fin.Coord_lit == 1 && piesa.type() == 'P'){
-                                        joc.computer.removePiece(fin,piesa);
-                                        Piece nou = Factory.setez("Queen",fin,Colors.Black);
-                                        joc.computer.addPiece(fin,nou);
-                                        ChessPair<Position,Piece> chpr = new ChessPair<>();
-                                        chpr.setValue(piesa);
-                                        chpr.setKey(fin);
-                                        joc.tabla.tset.remove(chpr);
-                                        ChessPair<Position,Piece> chpr2 = new ChessPair<>();
-                                        chpr2.setValue(nou);
-                                        chpr2.setKey(fin);
-                                        joc.tabla.tset.add(chpr2);
-                                    }
-                                    //adaug in interfata de istoric de mutari
-                                    if(!joc.miscari.isEmpty()){
-                                        String s = "";
-                                        s += joc.ultimaMiscare().getCuloare();
-                                        s += ' ';
-                                        s += joc.ultimaMiscare().getPlecat();
-                                        s += ' ';
-                                        s += joc.ultimaMiscare().getAjuns();
-                                        s += '\n';
-                                        history.append(s);
-                                    }
-                                    break;
-                                }
-                                joc.computer.removePiece(fin,piesa);
-                                joc.computer.addPiece(pozz,piesa);
-                                if(de_eliminat != null) {
-                                    joc.p1.addPiece(fin,de_eliminat);
-                                }
-                                //si ies
-                                //daca nu are mutari se alege alta piesa random
-                                //nu o sa existe situatie fara mutari pt ca daca nu are mutari este mat si se verifica deja
-                            }
-                        }
+            TreeSet<ChessPair<Position, Piece>> piese_computer = joc.computer.getOwnedPieces();
+            int nr_piese = piese_computer.size();
+            while(true) {
+                Random r = new Random();
+                //aleg o piesa random
+                int r1 = r.nextInt(nr_piese);
+                int cnt_int = 0;
+                ChessPair<Position, Piece> piesa_dorita = new ChessPair<Position, Piece>();
+                for(ChessPair<Position, Piece> i : piese_computer){
+                    //iau piesa random
+                    if(cnt_int == r1){
+                        piesa_dorita = i;
+                        break;
                     }
-                    for (Map.Entry<Position, JPanel> e : squareByPos.entrySet()) {
-                        Position p = e.getKey();
-                        JPanel sq = e.getValue();
-                        //aici reface tabla, deseneaza noua piesa pe noul ei loc(da remove la toate si apoi le repune)
-                        sq.removeAll();
-                        Piece piece = joc.tabla.getPieceAt(p);
-                        if (piece != null) {
-                            AlegeCaracter cv = new AlegeCaracter();
-                            String ceva = "";
-                            ceva += cv.alege(joc.tabla.getPieceAt(p).getColor(),joc.tabla.getPieceAt(p).type());
-                            JLabel ceva2 = new JLabel(ceva, SwingConstants.CENTER);
-                            ceva2.setFont(new Font("", Font.PLAIN, 50));
-                            sq.add(ceva2, BorderLayout.CENTER);
-                        }
-                    }
-                    app.revalidate();
-                    app.repaint();
+                    cnt_int ++;
                 }
-            });
+                if(piesa_dorita != null){
+                    Position pozz = piesa_dorita.getKey();
+                    Piece piesa = piesa_dorita.getValue();
+                    List<Position> mutari_poibile= null;
+                    try {
+                        mutari_poibile = piesa.getPossibleMoves(joc.tabla);
+                    } catch (InvalidMoveException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if(!mutari_poibile.isEmpty()){
+                        //daca are mutari, fac o mutare random
+                        Random random = new Random();
+                        Position finn = mutari_poibile.get(random.nextInt(mutari_poibile.size()));
+                        Piece de_eliminat = null;
+                        if(joc.tabla.getPieceAt(finn) != null){
+                            de_eliminat = joc.tabla.getPieceAt(finn);
+                        }
+                        int reusit = 0;
+                        try {
+                            reusit = joc.onMoveMade(joc.computer,pozz,finn,-1);
+                            if(de_eliminat != null){
+                                AlegeCaracter lol = new AlegeCaracter();
+                                if(de_eliminat.getColor() == Colors.White){
+                                    p2.setText(p2.getText() + lol.alege(Colors.White,de_eliminat.type()));
+                                }
+                                if(de_eliminat.getColor() == Colors.Black){
+                                    p1.setText(p1.getText() + lol.alege(Colors.Black,de_eliminat.type()));
+                                }
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        if(reusit != 0){
+                            cnt = 0;
+                            //schimba in regina
+                            if(col == Colors.Black && finn.Coord_lit == 8 && piesa.type() == 'P'){
+                                joc.computer.removePiece(finn,piesa);
+                                Piece nou = Factory.setez("Queen",finn,Colors.White);
+                                joc.computer.addPiece(finn,nou);
+                                ChessPair<Position,Piece> chpr = new ChessPair<>();
+                                chpr.setValue(piesa);
+                                chpr.setKey(finn);
+                                joc.tabla.tset.remove(chpr);
+                                ChessPair<Position,Piece> chpr2 = new ChessPair<>();
+                                chpr2.setValue(nou);
+                                chpr2.setKey(finn);
+                            }
+                            else if(col == Colors.White && finn.Coord_lit == 1 && piesa.type() == 'P'){
+                                joc.computer.removePiece(finn,piesa);
+                                Piece nou = Factory.setez("Queen",finn,Colors.Black);
+                                joc.computer.addPiece(finn,nou);
+                                ChessPair<Position,Piece> chpr = new ChessPair<>();
+                                chpr.setValue(piesa);
+                                chpr.setKey(finn);
+                                joc.tabla.tset.remove(chpr);
+                                ChessPair<Position,Piece> chpr2 = new ChessPair<>();
+                                chpr2.setValue(nou);
+                                chpr2.setKey(finn);
+                                joc.tabla.tset.add(chpr2);
+                            }
+                            //adaug in interfata de istoric de mutari
+                            if(!joc.miscari.isEmpty()){
+                                String s = "";
+                                s += joc.ultimaMiscare().getCuloare();
+                                s += ' ';
+                                s += joc.ultimaMiscare().getPlecat();
+                                s += ' ';
+                                s += joc.ultimaMiscare().getAjuns();
+                                s += '\n';
+                                history.append(s);
+                            }
+                            break;
+                        }
+                        joc.computer.removePiece(finn,piesa);
+                        joc.computer.addPiece(pozz,piesa);
+                        if(de_eliminat != null) {
+                            joc.p1.addPiece(finn,de_eliminat);
+                        }
+                        //si ies
+                        //daca nu are mutari se alege alta piesa random
+                        //nu o sa existe situatie fara mutari pt ca daca nu are mutari este mat si se verifica deja
+                    }
+                }
+            }
+            for (Map.Entry<Position, JPanel> e : squareByPos.entrySet()) {
+                Position p = e.getKey();
+                JPanel sq = e.getValue();
+                //aici reface tabla, deseneaza noua piesa pe noul ei loc(da remove la toate si apoi le repune)
+                sq.removeAll();
+                Piece piece = joc.tabla.getPieceAt(p);
+                if (piece != null) {
+                    AlegeCaracter cv = new AlegeCaracter();
+                    String ceva = "";
+                    ceva += cv.alege(joc.tabla.getPieceAt(p).getColor(),joc.tabla.getPieceAt(p).type());
+                    JLabel ceva2 = new JLabel(ceva, SwingConstants.CENTER);
+                    ceva2.setFont(new Font("", Font.PLAIN, 50));
+                    sq.add(ceva2, BorderLayout.CENTER);
+                }
+            }
+            app.revalidate();
+            app.repaint();
         }
         Piece pieceAtClicked = joc.tabla.getPieceAt(clicked);
         if (selected == null) {
@@ -238,12 +233,12 @@ public class Main {
             if (pieceAtClicked != null) {
                 if (pieceAtClicked.getColor() == col) {
                     selected = clicked;
-                    highlightMovesForSelected( joc, col,highlighted, squareByPos, app);
+                    highlightMutari( joc, col,highlighted, squareByPos, app);
                 } else {
-                    clearHighlightsAndSelection(highlighted,squareByPos);
+                    clearAll(highlighted,squareByPos);
                 }
             } else {
-                clearHighlightsAndSelection(highlighted,squareByPos);
+                clearAll(highlighted,squareByPos);
             }
             return;
         }
@@ -330,7 +325,7 @@ public class Main {
                 }
                 //dupa mutare se scot highlighturile
                 //apoi se sterg piesele si pun din nou noile piese(cu o mutare diferit si maybe o piesa capturata)
-                clearHighlightsAndSelection(highlighted,squareByPos);
+                clearAll(highlighted,squareByPos);
                 for (Map.Entry<Position, JPanel> e : squareByPos.entrySet()) {
                     Position p = e.getKey();
                     JPanel sq = e.getValue();
@@ -348,157 +343,152 @@ public class Main {
                 app.revalidate();
                 app.repaint();
                 //dupa ce muta playerul si termina de mutat, apoi muta calculatorul iar
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        TreeSet<ChessPair<Position, Piece>> piese_computer = joc.computer.getOwnedPieces();
+                TreeSet<ChessPair<Position, Piece>> piese_computer = joc.computer.getOwnedPieces();
+                try {
+                    if(joc.checkForCheckMate(joc.computer)){
+                        System.out.println("Jucatorul a catigat prin mat");
+                        PointsStrategy pct = new FinalPointsStrategy();
+                        puncte += pct.modificaPunctaj(null,1);
+                        fin.setText("Partida terminata prin mat. Va rugam apasati pe tabla inca o data");
+                        mat = 1;
+                        return;
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                //din nou, logica veche de la jocul din terminal
+                //ia o piesa random si o muta
+                int nr_piese = piese_computer.size();
+                while(true) {
+                    Random r = new Random();
+                    //aleg o piesa random
+                    int r1 = r.nextInt(nr_piese);
+                    int cnt_int = 0;
+                    ChessPair<Position, Piece> piesa_dorita = new ChessPair<Position, Piece>();
+                    for(ChessPair<Position, Piece> i : piese_computer){
+                        //iau piesa random
+                        if(cnt_int == r1){
+                            piesa_dorita = i;
+                            break;
+                        }
+                        cnt_int ++;
+                    }
+                    if(piesa_dorita != null){
+                        Position pozz = piesa_dorita.getKey();
+                        Piece piesa = piesa_dorita.getValue();
+                        List<Position> mutari_poibile= null;
                         try {
-                            if(joc.checkForCheckMate(joc.computer)){
-                                System.out.println("Jucatorul a catigat prin mat");
-                                PointsStrategy pct = new FinalPointsStrategy();
-                                puncte += pct.modificaPunctaj(null,1);
-                                fin.setText("Partida terminata prin mat. Va rugam apasati pe tabla inca o data");
-                                mat = 1;
-                                return;
-                            }
-                        } catch (Exception e) {
+                            mutari_poibile = piesa.getPossibleMoves(joc.tabla);
+                        } catch (InvalidMoveException e) {
                             throw new RuntimeException(e);
                         }
-                        //din nou, logica veche de la jocul din terminal
-                        //ia o piesa random si o muta
-                        int nr_piese = piese_computer.size();
-                        while(true) {
-                            Random r = new Random();
-                            //aleg o piesa random
-                            int r1 = r.nextInt(nr_piese);
-                            int cnt_int = 0;
-                            ChessPair<Position, Piece> piesa_dorita = new ChessPair<Position, Piece>();
-                            for(ChessPair<Position, Piece> i : piese_computer){
-                                //iau piesa random
-                                if(cnt_int == r1){
-                                    piesa_dorita = i;
-                                    break;
-                                }
-                                cnt_int ++;
+                        if(!mutari_poibile.isEmpty()){
+                            //daca are mutari, fac o mutare random
+                            Random random = new Random();
+                            Position finn = mutari_poibile.get(random.nextInt(mutari_poibile.size()));
+                            de_eliminat = null;
+                            if(joc.tabla.getPieceAt(finn) != null) {
+                                de_eliminat = joc.tabla.getPieceAt(finn);
                             }
-                            if(piesa_dorita != null){
-                                Position pozz = piesa_dorita.getKey();
-                                Piece piesa = piesa_dorita.getValue();
-                                List<Position> mutari_poibile= null;
-                                try {
-                                    mutari_poibile = piesa.getPossibleMoves(joc.tabla);
-                                } catch (InvalidMoveException e) {
-                                    throw new RuntimeException(e);
+                            int reusit2 = 0;
+                            try {
+                                reusit2 = joc.onMoveMade(joc.computer,pozz,finn,-1);
+                                if(reusit2 == 0){
+                                    //sa nu se salveze in interfata de mutari unele mutari invalide
+                                    joc.miscari.removeLast();
                                 }
-                                if(!mutari_poibile.isEmpty()){
-                                    //daca are mutari, fac o mutare random
-                                    Random random = new Random();
-                                    Position fin = mutari_poibile.get(random.nextInt(mutari_poibile.size()));
-                                    Piece de_eliminat = null;
-                                    if(joc.tabla.getPieceAt(fin) != null) {
-                                        de_eliminat = joc.tabla.getPieceAt(fin);
-                                    }
-                                    int reusit2 = 0;
-                                    try {
-                                        reusit2 = joc.onMoveMade(joc.computer,pozz,fin,-1);
-                                        if(reusit2 == 0){
-                                            //sa nu se salveze in interfata de mutari unele mutari invalide
-                                            joc.miscari.removeLast();
-                                        }
-                                    } catch (Exception e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                    if(reusit2 != 0){
-                                        //tablele vechi, pt verificarea de remiza
-                                        b5 = new Board(b4);
-                                        b4 = new Board(b3);
-                                        b3 = new Board(b2);
-                                        b2 = new Board(b1);
-                                        b1 = new Board(joc.tabla);
-                                        //interfata eliminat identic ca la player
-                                        if(de_eliminat != null){
-                                            AlegeCaracter lol = new AlegeCaracter();
-                                            if(de_eliminat.getColor() == Colors.White){
-                                                p2.setText(p2.getText() + lol.alege(Colors.White,de_eliminat.type()));
-                                            }
-                                            if(de_eliminat.getColor() == Colors.Black){
-                                                p1.setText(p1.getText() + lol.alege(Colors.Black,de_eliminat.type()));
-                                            }
-                                        }
-                                        //din nou interfata de istoric de mutari
-                                        if(!joc.miscari.isEmpty()){
-                                            String s = "";
-                                            s += joc.ultimaMiscare().getCuloare();
-                                            s += ' ';
-                                            s += joc.ultimaMiscare().getPlecat();
-                                            s += ' ';
-                                            s += joc.ultimaMiscare().getAjuns();
-                                            s += '\n';
-                                            history.append(s);
-                                        }
-                                        cnt = 0;
-                                        //schimba in regina
-                                        if(col == Colors.Black && fin.Coord_num == 8 && joc.tabla.getPieceAt(fin).type() == 'P'){
-                                            ChessPair<Position,Piece> chpr = new ChessPair<>();
-                                            chpr.setValue(joc.tabla.getPieceAt(fin));
-                                            chpr.setKey(fin);
-                                            joc.tabla.tset.remove(chpr);
-                                            joc.computer.removePiece(fin,joc.tabla.getPieceAt(fin));
-                                            Piece nou = Factory.setez("Queen",fin,Colors.White);
-                                            joc.computer.addPiece(fin,nou);
-                                            ChessPair<Position,Piece> chpr2 = new ChessPair<>();
-                                            chpr2.setValue(nou);
-                                            chpr2.setKey(fin);
-                                            joc.tabla.tset.add(chpr2);
-                                        }
-                                        else if(col == Colors.White && fin.Coord_num == 1 && joc.tabla.getPieceAt(fin).type() == 'P'){
-                                            ChessPair<Position,Piece> chpr = new ChessPair<>();
-                                            chpr.setValue(joc.tabla.getPieceAt(fin));
-                                            chpr.setKey(fin);
-                                            joc.tabla.tset.remove(chpr);
-                                            joc.computer.removePiece(fin,joc.tabla.getPieceAt(fin));
-                                            Piece nou = Factory.setez("Queen",fin,Colors.Black);
-                                            joc.computer.addPiece(fin,nou);
-                                            ChessPair<Position,Piece> chpr2 = new ChessPair<>();
-                                            chpr2.setValue(nou);
-                                            chpr2.setKey(fin);
-                                            joc.tabla.tset.add(chpr2);
-                                        }
-                                        break;
-                                    }
-                                    joc.computer.removePiece(fin,piesa);
-                                    joc.computer.addPiece(pozz,piesa);
-                                    //si ies
-                                    //daca nu are mutari se alege alta piesa random
-                                    //nu o sa existe situatie fara mutari pt ca daca nu are mutari este mat si se verifica deja
-                                }
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
                             }
+                            if(reusit2 != 0){
+                                //tablele vechi, pt verificarea de remiza
+                                b5 = new Board(b4);
+                                b4 = new Board(b3);
+                                b3 = new Board(b2);
+                                b2 = new Board(b1);
+                                b1 = new Board(joc.tabla);
+                                //interfata eliminat identic ca la player
+                                if(de_eliminat != null){
+                                    AlegeCaracter lol = new AlegeCaracter();
+                                    if(de_eliminat.getColor() == Colors.White){
+                                        p2.setText(p2.getText() + lol.alege(Colors.White,de_eliminat.type()));
+                                    }
+                                    if(de_eliminat.getColor() == Colors.Black){
+                                        p1.setText(p1.getText() + lol.alege(Colors.Black,de_eliminat.type()));
+                                    }
+                                }
+                                //din nou interfata de istoric de mutari
+                                if(!joc.miscari.isEmpty()){
+                                    String s = "";
+                                    s += joc.ultimaMiscare().getCuloare();
+                                    s += ' ';
+                                    s += joc.ultimaMiscare().getPlecat();
+                                    s += ' ';
+                                    s += joc.ultimaMiscare().getAjuns();
+                                    s += '\n';
+                                    history.append(s);
+                                }
+                                cnt = 0;
+                                //schimba in regina
+                                if(col == Colors.Black && finn.Coord_num == 8 && joc.tabla.getPieceAt(finn).type() == 'P'){
+                                    ChessPair<Position,Piece> chpr = new ChessPair<>();
+                                    chpr.setValue(joc.tabla.getPieceAt(finn));
+                                    chpr.setKey(finn);
+                                    joc.tabla.tset.remove(chpr);
+                                    joc.computer.removePiece(finn,joc.tabla.getPieceAt(finn));
+                                    Piece nou = Factory.setez("Queen",finn,Colors.White);
+                                    joc.computer.addPiece(finn,nou);
+                                    ChessPair<Position,Piece> chpr2 = new ChessPair<>();
+                                    chpr2.setValue(nou);
+                                    chpr2.setKey(finn);
+                                    joc.tabla.tset.add(chpr2);
+                                }
+                                else if(col == Colors.White && finn.Coord_num == 1 && joc.tabla.getPieceAt(finn).type() == 'P'){
+                                    ChessPair<Position,Piece> chpr = new ChessPair<>();
+                                    chpr.setValue(joc.tabla.getPieceAt(finn));
+                                    chpr.setKey(finn);
+                                    joc.tabla.tset.remove(chpr);
+                                    joc.computer.removePiece(finn,joc.tabla.getPieceAt(finn));
+                                    Piece nou = Factory.setez("Queen",finn,Colors.Black);
+                                    joc.computer.addPiece(finn,nou);
+                                    ChessPair<Position,Piece> chpr2 = new ChessPair<>();
+                                    chpr2.setValue(nou);
+                                    chpr2.setKey(finn);
+                                    joc.tabla.tset.add(chpr2);
+                                }
+                                break;
+                            }
+                            joc.computer.removePiece(finn,piesa);
+                            joc.computer.addPiece(pozz,piesa);
+                            //si ies
+                            //daca nu are mutari se alege alta piesa random
+                            //nu o sa existe situatie fara mutari pt ca daca nu are mutari este mat si se verifica deja
                         }
-                        //din nou, se steg toate piesele si repun cele noi cu o mutare diferita
-                        for (Map.Entry<Position, JPanel> e : squareByPos.entrySet()) {
-                            Position p = e.getKey();
-                            JPanel sq = e.getValue();
-                            sq.removeAll();
-                            Piece piece = joc.tabla.getPieceAt(p);
-                            if (piece != null) {
-                                AlegeCaracter cv = new AlegeCaracter();
-                                String ceva = "";
-                                ceva += cv.alege(joc.tabla.getPieceAt(p).getColor(),joc.tabla.getPieceAt(p).type());
-                                JLabel ceva2 = new JLabel(ceva, SwingConstants.CENTER);
-                                ceva2.setFont(new Font("", Font.PLAIN, 50));
-                                sq.add(ceva2, BorderLayout.CENTER);
-                            }
-                        }
-                        app.revalidate();
-                        app.repaint();
                     }
-                });
+                }
+                //din nou, se steg toate piesele si repun cele noi cu o mutare diferita
+                for (Map.Entry<Position, JPanel> e : squareByPos.entrySet()) {
+                    Position p = e.getKey();
+                    JPanel sq = e.getValue();
+                    sq.removeAll();
+                    Piece piece = joc.tabla.getPieceAt(p);
+                    if (piece != null) {
+                        AlegeCaracter cv = new AlegeCaracter();
+                        String ceva = "";
+                        ceva += cv.alege(joc.tabla.getPieceAt(p).getColor(),joc.tabla.getPieceAt(p).type());
+                        JLabel ceva2 = new JLabel(ceva, SwingConstants.CENTER);
+                        ceva2.setFont(new Font("", Font.PLAIN, 50));
+                        sq.add(ceva2, BorderLayout.CENTER);
+                    }
+                }
+                app.revalidate();
+                app.repaint();
             } else {
                 //aici e daca playerul nu a fost capabil sa faca o mutare
                 //adica a dat click pe ceva highlighted dar imposibil
                 //ca de exemplu, dupa mutarea dorita ramanaea in sah
                 //atunci ramane tura lui
-                clearHighlightsAndSelection(highlighted,squareByPos);
+                clearAll(highlighted,squareByPos);
                 for (Map.Entry<Position, JPanel> e : squareByPos.entrySet()) {
                     Position p = e.getKey();
                     JPanel sq = e.getValue();
@@ -521,14 +511,14 @@ public class Main {
         //daca nu e in stare sa faca o mutare din orice motiv(invalid, click pe altceva) atunci se sterg highlighturile dupa un click pe ceva invalid
         if (pieceAtClicked != null) {
             if (pieceAtClicked.getColor() == col) {
-                clearHighlightsAndSelection(highlighted,squareByPos);
+                clearAll(highlighted,squareByPos);
                 selected = clicked;
-                highlightMovesForSelected( joc, col, highlighted, squareByPos, app);
+                highlightMutari( joc, col, highlighted, squareByPos, app);
             } else {
-                clearHighlightsAndSelection(highlighted,squareByPos);
+                clearAll(highlighted,squareByPos);
             }
         } else {
-            clearHighlightsAndSelection(highlighted,squareByPos);
+            clearAll(highlighted,squareByPos);
         }
     }
     public void intialize(JFrame app, Colors col, Game joc, Main sah) throws InvalidMoveException {
@@ -661,18 +651,13 @@ public class Main {
                             } catch (IOException ex) {
                                 throw new RuntimeException(ex);
                             }
-                            //se da load la ecranul de dinal de partida
-                            SwingUtilities.invokeLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if(mat == 1) {
-                                        FinalPartida(app, sah,"Partida terminata prin sah mat");
-                                    }
-                                    else{
-                                        FinalPartida(app, sah,"Partida terminata prin remiza");
-                                    }
-                                }
-                            });
+                            //se da load la ecranul de final de partida
+                            if(mat == 1) {
+                                FinalPartida(app, sah,"Partida terminata prin sah mat");
+                            }
+                            else{
+                                FinalPartida(app, sah,"Partida terminata prin remiza");
+                            }
                             return;
                         }
                         JPanel src = (JPanel) e.getSource();
