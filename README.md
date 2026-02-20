@@ -1,6 +1,6 @@
   ## This is my homework for OOP
   It was splited into 2 parts.
-  #Part I
+  # Part I
 A console-based Chess game implemented in Java, following Object-Oriented Programming principles. 
 The application supports user authentication, game persistence using JSON files, full move validation, scoring, and a Player vs Computer mode.
 
@@ -12,7 +12,7 @@ Scoring system based on captured pieces and game outcome
 Custom exceptions for invalid commands and moves
 Save and resume games using JSON files
 
-#Part II
+# Part II
 Extension of the Chess project with a Java Swing graphical interface and integration of multiple design patterns.
   Implemented Features:
 Fully interactive 8x8 chess board (GUI-based gameplay)
