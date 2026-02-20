@@ -5,6 +5,7 @@ A console-based Chess game implemented in Java, following Object-Oriented Progra
 The application supports user authentication, game persistence using JSON files, full move validation, scoring, and a Player vs Computer mode.
 
   Implemented Features:
+  
 Complete chess logic (without special moves like castling or en passant)
 OOP architecture with clear class hierarchy (Board, Game, Player, Piece, etc.)
 Move validation, check and checkmate detection
@@ -16,6 +17,7 @@ Save and resume games using JSON files
 Extension of the Chess project with a Java Swing graphical interface and integration of multiple design patterns.
 
   Implemented Features:
+  
 Fully interactive 8x8 chess board (GUI-based gameplay)
 Login, main menu, game screen, and end screen
 Player vs Computer mode with automatic random moves
