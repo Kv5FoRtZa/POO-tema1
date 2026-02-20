@@ -14,6 +14,7 @@ Save and resume games using JSON files
 
 # Part II
 Extension of the Chess project with a Java Swing graphical interface and integration of multiple design patterns.
+
   Implemented Features:
 Fully interactive 8x8 chess board (GUI-based gameplay)
 Login, main menu, game screen, and end screen
